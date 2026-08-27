@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#F6F4EE">
+<title>Rx&nbsp;Finder — Medicine Availability &amp; Price Compare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%232F6A4F%22/><text x=%2250%22 y=%2262%22 font-size=%2255%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22>℞</text></svg>">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- ============================== HEADER ============================== -->
+<header class="site">
+  <div class="header-inner wrap">
+    <a class="brand" href="#" data-nav="search">
+      <span class="brand-mark">℞</span>
+      <span class="brand-text"><b>Rx Finder</b><span>Live Stock &amp; Price Compare</span></span>
+    </a>
+    <nav class="main-nav">
+      <button class="active" data-nav="search">Find Medicine</button>
+      <button data-nav="pharmacies">Pharmacies</button>
+      <button data-nav="compare">Compare <span class="count" id="navCompareCount">0</span></button>
+      <button data-nav="saved">Saved <span class="count" id="navSavedCount">0</span></button>
+    </nav>
+    <div class="header-actions">
+      <button class="premium-pill" id="premiumToggle" title="Toggle premium demo">✦ <span id="premiumLabel">Try Premium</span></button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark and light theme">
+        <span class="knob" id="themeKnob">☀</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== HERO / SEARCH ============================== -->
+<section class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Real-Time Medicine & Pharmacy Locator· Live inventory sync</div>
+      <h1 class="headline">Find who has your <em>medicine</em>,<br>right now.</h1>
+      <p class="sub">Search any medicine to see real-time stock and price across nearby pharmacies, compare generics, and get notified the moment it's back on the shelf.</p>
+
+      <div class="search-counter">
+        <div class="search-row">
+          <span class="rx-icon">℞</span>
+          <input type="text" id="searchInput" placeholder="Search medicine, generic name, or condition…" autocomplete="off">
+          <button class="btn primary" id="searchBtn">Search</button>
+        </div>
+        <div class="suggest-list" id="suggestList"></div>
+
+        <div class="location-row">
+          <button class="btn primary small" id="detectBtn">📍 Detect my location</button>
+          <button class="location-btn" id="locationBtn">
+            <span class="loc-dot"></span>
+            <span id="locationLabel">Set your location</span>
+            <span class="loc-change">Change</span>
+          </button>
+          <div class="location-panel" id="locationPanel">
+            <p class="loc-panel-sub">Pick your area</p>
+            <div class="locality-list" id="localityList"></div>
+          </div>
+        </div>
+        <p class="location-hint">Tip: if detection doesn't work in an embedded preview, download this page and open it directly in your browser to use GPS — or just pick an area above.</p>
+      </div>
+
+      <div class="chip-row" id="categoryChips"></div>
+    </div>
+
+    <div class="ticker-card">
+      <div class="ticker-head">
+        <b>Network status</b>
+        <div class="live-dot">Live</div>
+      </div>
+      <div class="ticker-stats">
+        <div class="ticker-stat"><b id="statMeds">0</b><span>Medicines tracked</span></div>
+        <div class="ticker-stat"><b id="statPharm">0</b><span>Pharmacies connected</span></div>
+        <div class="ticker-stat"><b id="statInStock">0%</b><span>Avg. in-stock rate</span></div>
+        <div class="ticker-stat"><b id="stat24">0</b><span>Open 24×7 nearby</span></div>
+      </div>
+      <div class="ticker-foot" id="syncFoot">Last synced just now</div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap nearby-section">
+  <div class="nearby-header">
+    <h3>Nearest to you</h3>
+    <span id="liveSearchIndicator" class="live-search-indicator">🔎 Checking OpenStreetMap for real pharmacies…</span>
+  </div>
+  <div class="nearby-strip" id="nearbyStrip"></div>
+</section>
+
+<div class="wrap"><div class="tear-line"></div></div>
+
+<!-- ============================== MAIN APP ============================== -->
+<main class="app wrap">
+
+  <!-- ---------- SEARCH / RESULTS VIEW ---------- -->
+  <section class="view active" id="view-search">
+    <div class="app-grid">
+      <aside class="filters">
+        <h3>Refine results</h3>
+        <p class="filters-sub">Narrow down by type, price, and availability.</p>
+
+        <div class="filter-group">
+          <label>Requirement</label>
+          <div class="filter-options" id="rxFilter">
+            <span class="chip active" data-rx="all">All</span>
+            <span class="chip" data-rx="otc">OTC only</span>
+            <span class="chip" data-rx="rx">Prescription</span>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Max price <span class="range-val" id="priceVal">₹700</span></label>
+          <div class="range-row">
+            <input type="range" id="priceRange" min="10" max="700" value="700" step="10">
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Availability</label>
+          <div class="filter-options">
+            <span class="chip" id="inStockOnly" data-toggle="stock">In stock only</span>
+            <span class="chip" id="open24Only" data-toggle="open24">Near 24×7</span>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Distance from you</label>
+          <div class="filter-options" id="radiusFilter">
+            <span class="chip active" data-radius="0">Any</span>
+            <span class="chip" data-radius="3">3 km</span>
+            <span class="chip" data-radius="5">5 km</span>
+            <span class="chip" data-radius="10">10 km</span>
+            <span class="chip" data-radius="20">20 km</span>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Sort by</label>
+          <select id="sortSelect">
+            <option value="relevance">Relevance</option>
+            <option value="distance">Nearest to me</option>
+            <option value="price-low">Lowest price</option>
+            <option value="price-high">Highest price</option>
+            <option value="availability">Most availability</option>
+          </select>
+        </div>
+
+        <button class="reset-link" id="resetFilters">Reset all filters</button>
+      </aside>
+
+      <div>
+        <div class="results-head">
+          <h2 id="resultsTitle">All medicines</h2>
+          <span id="resultsCount">0 results</span>
+        </div>
+        <div class="results-grid" id="resultsGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- PHARMACIES VIEW ---------- -->
+  <section class="view" id="view-pharmacies">
+    <div class="results-head">
+      <h2>Partner pharmacies</h2>
+      <span>Across Delhi NCR</span>
+    </div>
+    <div class="pharmacy-list-view" id="pharmacyGrid"></div>
+  </section>
+
+  <!-- ---------- COMPARE VIEW ---------- -->
+  <section class="view" id="view-compare">
+    <div class="results-head">
+      <h2>Compare medicines</h2>
+      <span id="compareLimitLabel"></span>
+    </div>
+    <div id="compareContent"></div>
+  </section>
+
+  <!-- ---------- SAVED VIEW ---------- -->
+  <section class="view" id="view-saved">
+    <div class="results-head">
+      <h2>Saved medicines</h2>
+      <span id="savedLimitLabel"></span>
+    </div>
+    <div class="results-grid" id="savedGrid"></div>
+  </section>
+
+</main>
+
+<!-- ============================== COMPARE TRAY ============================== -->
+<div class="compare-tray" id="compareTray">
+  <div class="tray-items" id="trayItems"></div>
+  <button class="btn primary small" id="trayCompareBtn">Compare</button>
+  <button class="btn ghost small" id="trayClearBtn">Clear</button>
+</div>
+
+<!-- ============================== DETAIL DRAWER ============================== -->
+<div class="overlay" id="drawerOverlay">
+  <div class="drawer" id="drawer"></div>
+</div>
+
+<!-- ============================== FOOTER ============================== -->
+<footer class="site">
+  <div class="wrap">
+
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="brand" href="#" data-nav="search">
+          <span class="brand-mark">℞</span>
+          <span class="brand-text"><b>Rx Finder</b><span>Live Stock &amp; Price Compare</span></span>
+        </a>
+        <p class="footer-about">A medicine availability &amp; price-compare tool for Delhi NCR — real pharmacy locations sourced live from mapping APIs, with clear, honest labelling anywhere the data is estimated rather than live.</p>
+        <div class="footer-stat-row">
+          <div class="footer-stat"><b id="footerStatMeds">0</b><span>Medicines tracked</span></div>
+          <div class="footer-stat"><b id="footerStatCats">0</b><span>Categories</span></div>
+          <div class="footer-stat"><b>Live</b><span>Pharmacy lookup</span></div>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h5>Explore</h5>
+        <a href="#" data-nav="search">Find medicine</a>
+        <a href="#" data-nav="pharmacies">Nearby pharmacies</a>
+        <a href="#" data-nav="compare">Compare medicines</a>
+        <a href="#" data-nav="saved">Saved list</a>
+      </div>
+
+      <div class="footer-col">
+        <h5>Top categories</h5>
+        <a href="#" data-footer-cat="Pain Relief">Pain Relief</a>
+        <a href="#" data-footer-cat="Antibiotic">Antibiotic</a>
+        <a href="#" data-footer-cat="Diabetes">Diabetes</a>
+        <a href="#" data-footer-cat="Cardiac">Cardiac</a>
+        <a href="#" class="view-all" id="footerViewAllCats">View all categories →</a>
+      </div>
+
+      <div class="footer-col">
+        <h5>Help &amp; info</h5>
+        <button type="button" class="link-btn" data-info="how">How this works</button>
+        <button type="button" class="link-btn" data-info="accuracy">Why prices are estimated</button>
+        <button type="button" class="link-btn" data-info="privacy">Privacy</button>
+        <button type="button" class="link-btn" data-info="terms">Terms of use</button>
+        <button type="button" class="link-btn" data-info="disclaimer">Medical disclaimer</button>
+      </div>
+
+      <div class="footer-col footer-signup">
+        <h5>Price-drop alerts</h5>
+        <p>Get notified when a saved medicine drops in price nearby. Demo only — nothing is sent or stored.</p>
+        <form class="footer-signup-form" id="footerSignupForm">
+          <input type="email" placeholder="you@example.com" required aria-label="Email address">
+          <button class="btn primary small" type="submit">Notify me</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© <span id="footerYear"></span> Rx Finder.</span>
+      <div class="footer-legal-links">
+        <button type="button" class="link-btn" data-info="privacy">Privacy</button>
+        <button type="button" class="link-btn" data-info="terms">Terms</button>
+        <button type="button" class="link-btn" data-info="disclaimer">Disclaimer</button>
+        <button class="footer-top-btn" id="footerToTop" title="Back to top" aria-label="Back to top">↑</button>
+      </div>
+    </div>
+
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>
