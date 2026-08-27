@@ -10,7 +10,7 @@ The application provides an intuitive search experience with location-based phar
 
 ## 🌐 Live Demo
 
-**[Visit Rx Finder →](https://rx-finder.netlify.app/)**
+**[Visit Rx Finder](https://rx-finder.netlify.app/)**
 
 ---
 
@@ -179,8 +179,6 @@ Always confirm medicine availability, pricing, prescription requirements, and ot
 ### Arushi Sharma
 
 **Computer Science & Engineering | Full Stack Developer**
-
-\
 
 ---
 
